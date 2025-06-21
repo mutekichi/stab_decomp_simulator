@@ -1,10 +1,10 @@
-from src.stabilizer_state_ch_form import StabilizerStateChForm
-
-import numpy as np
 import random
 
-# --- Test functions ---
+import numpy as np
+from src.stabilizer_state_ch_form import StabilizerStateChForm
 
+
+# --- Test functions ---
 def test_inner_method_random(num_qubits: int = 4, num_tests: int = 50) -> None:
     """
     Tests the StabilizerStateChForm.inner method by comparing it to the
@@ -31,7 +31,7 @@ def test_inner_method_random(num_qubits: int = 4, num_tests: int = 50) -> None:
                     state.apply_z(choose(n), exponent=0.5)
                 else:
                     getattr(state, f"apply_{gate}")(choose(n), exponent=exp)
-            else: # cx, cz
+            else:  # cx, cz
                 q0, q1 = choose(n), choose(n)
                 while q1 == q0:
                     q1 = choose(n)
