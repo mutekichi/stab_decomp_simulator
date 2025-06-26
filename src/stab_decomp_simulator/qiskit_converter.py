@@ -62,7 +62,7 @@ def qiskit_circuit_to_stab_decomp(qc: QuantumCircuit) -> StabilizerDecomposedSta
         elif name in gate_map_ch:
             clifford_ops.append((gate_map_ch[name], qubits))
         else:
-            raise ValueError(f"Unsupported gate '{name}' in circuit.")
+            raise ValueError(f"Unsupported gate '{name}' in circuit. {instruction}")
 
     # If there are no T-gates, the circuit is purely Clifford.
     if num_t_gates == 0:

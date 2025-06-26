@@ -1,0 +1,2 @@
+numpy
+qiskit>=1.2.4

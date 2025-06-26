@@ -8,7 +8,8 @@ from qiskit.circuit.library import (CXGate, CZGate, HGate, SGate, XGate, YGate,
 from qiskit.quantum_info import (DensityMatrix, Operator, Statevector,
                                  partial_trace)
 # Import the class to be tested
-from src.stabilizer_state_ch_form import StabilizerStateChForm
+from src.stab_decomp_simulator.stabilizer_state_ch_form import \
+    StabilizerStateChForm
 
 # --- Helper Functions ---
 

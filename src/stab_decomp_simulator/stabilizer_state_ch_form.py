@@ -136,21 +136,21 @@ class StabilizerStateChForm:
         """
         y = np.array(big_endian_int_to_digits(x, digit_count=self.n, base=2), dtype=bool)
 
-        mu = int(sum(y * self.gamma))
+        mu = int(np.sum(y * self.gamma))
 
         u = np.zeros(self.n, dtype=bool)
         for p in range(self.n):
             if y[p]:
                 u ^= self.mat_F[p, :]
-                mu += 2 * (sum(self.mat_M[p, :] & u) % 2)
+                mu += 2 * (np.sum(self.mat_M[p, :] & u) % 2)
 
         is_zero = not np.all(self.v | (u == self.s))
 
         return (
             self.omega
-            * (2 ** (-sum(self.v) / 2))
+            * (2 ** (-np.sum(self.v) / 2))
             * (1j**mu)
-            * ((-1) ** sum(self.v & u & self.s))
+            * ((-1) ** np.sum(self.v & u & self.s))
             * (not is_zero)
         )
 
@@ -296,7 +296,7 @@ class StabilizerStateChForm:
             if v_i:
                 w[i] = bool(prng.randint(2))
 
-        measurement_outcome = int(sum(w & self.mat_G[q, :]) % 2)
+        measurement_outcome = int(np.sum(w & self.mat_G[q, :]) % 2)
 
         # Project the state to the measurement outcome.
         self.project_Z(q, measurement_outcome)
@@ -313,12 +313,12 @@ class StabilizerStateChForm:
         """
         t = self.s.copy()
         u = (self.mat_G[q, :] & self.v) ^ self.s
-        delta = (2 * sum((self.mat_G[q, :] & (~self.v)) & self.s) + 2 * z) % 4
+        delta = (2 * np.sum((self.mat_G[q, :] & (~self.v)) & self.s) + 2 * z) % 4
 
         if np.all(t == u):
             self.omega /= np.sqrt(2)
 
-        self.update_sum(t, u, delta=delta)
+        self.update_sum(t, u, delta=int(delta))
 
     def kron(self, other: StabilizerStateChForm) -> StabilizerStateChForm:
         """Computes the tensor product of this state with another."""
@@ -418,15 +418,15 @@ class StabilizerStateChForm:
             # (See Equations 48, 49 and Proposition 4 in the reference paper)
             t = self.s ^ (self.mat_G[axis, :] & self.v)
             u = self.s ^ (self.mat_F[axis, :] & (~self.v)) ^ (self.mat_M[axis, :] & self.v)
-            alpha = sum(self.mat_G[axis, :] & (~self.v) & self.s) % 2
+            alpha = np.sum(self.mat_G[axis, :] & (~self.v) & self.s) % 2
 
-            beta = sum(self.mat_M[axis, :] & (~self.v) & self.s)
-            beta += sum(self.mat_F[axis, :] & self.v & self.mat_M[axis, :])
-            beta += sum(self.mat_F[axis, :] & self.v & self.s)
+            beta = np.sum(self.mat_M[axis, :] & (~self.v) & self.s)
+            beta += np.sum(self.mat_F[axis, :] & self.v & self.mat_M[axis, :])
+            beta += np.sum(self.mat_F[axis, :] & self.v & self.s)
             beta %= 2
 
             delta = (self.gamma[axis] + 2 * (alpha + beta)) % 4
-            self.update_sum(t, u, delta=delta, alpha=alpha)
+            self.update_sum(t, u, delta=delta, alpha=int(alpha))
         self.omega *= _phase(exponent, global_shift)
 
     def apply_cz(
@@ -454,7 +454,7 @@ class StabilizerStateChForm:
             # (See end of Proposition 4 in the reference paper)
             term1 = self.gamma[control_axis]
             term2 = self.gamma[target_axis]
-            term3 = 2 * (sum(self.mat_M[control_axis, :] & self.mat_F[target_axis, :]) % 2)
+            term3 = 2 * (np.sum(self.mat_M[control_axis, :] & self.mat_F[target_axis, :]) % 2)
             self.gamma[control_axis] = (term1 + term2 + term3) % 4
 
             self.mat_G[target_axis, :] ^= self.mat_G[control_axis, :]
@@ -513,9 +513,9 @@ class StabilizerStateChForm:
         u = self.s ^ (self.mat_F[axis, :] & (~self.v)) ^ (self.mat_M[axis, :] & self.v)
 
         # 2. Calculate the phase exponent 'beta' (from Eq. 49)
-        beta = sum(self.mat_M[axis, :] & (~self.v) & self.s)
-        beta += sum(self.mat_F[axis, :] & self.v & self.mat_M[axis, :])
-        beta += sum(self.mat_F[axis, :] & self.v & self.s)
+        beta = np.sum(self.mat_M[axis, :] & (~self.v) & self.s)
+        beta += np.sum(self.mat_F[axis, :] & self.v & self.mat_M[axis, :])
+        beta += np.sum(self.mat_F[axis, :] & self.v & self.s)
         beta %= 2
 
         # 3. Get the phase exponent 'gamma_p'
@@ -637,6 +637,23 @@ class StabilizerStateChForm:
 
         return ops
 
+    def _get_ops_to_generate_state(self) -> List[Tuple[str, Tuple[int, ...]]]:
+        """Generates operations to generate |self> from omega|0...0>."""
+        normalize_to_zero_ops = self._get_normalize_to_zero_ops()
+
+        # Reverse the operations to get the original state
+        ops = []
+        for op_name, qubits in reversed(normalize_to_zero_ops):
+            # S and SDG gates are not Hermitian
+            if op_name == 's':
+                ops.append(('sdg', qubits))
+            elif op_name == 'sdg':
+                ops.append(('s', qubits))
+            else:
+                ops.append((op_name, qubits))
+
+        return ops
+
     def apply_pauli_string(
         self,
         pauli_string: str
@@ -666,6 +683,8 @@ class StabilizerStateChForm:
                 self.apply_x(qubits[0])
             elif op_name == 's':
                 self.apply_z(qubits[0], exponent=0.5)
+            elif op_name == 'sdg':
+                self.apply_z(qubits[0], exponent=-0.5)
             elif op_name == 'cz':
                 self.apply_cz(qubits[0], qubits[1])
             else:
@@ -857,3 +876,21 @@ class StabilizerStateChForm:
         for i in range(n):
             if i != qubit and self.mat_M[qubit, i]:
                 self._CZ_right(qubit, i)
+
+    def evolve(self, other: StabilizerStateChForm) -> None:
+        """Evolves this state by applying the operations from another state.
+        More specifically, for |self> and |other>: ω U_C U_H X^s |0...0>,
+        this method updates the state to |self'> = ω U_C U_H X^s |self>.
+
+        Args:
+            other: The StabilizerStateChForm to evolve this state with.
+        """
+        if self.n != other.n:
+            raise ValueError("Cannot evolve states with different numbers of qubits.")
+
+        ops_to_apply = other._get_ops_to_generate_state()
+        print(f"Number of operations to apply: {len(ops_to_apply)}")
+        for op in ops_to_apply:
+            print(f"Applying operation: {op}")
+        self._apply_ops_to_state(ops_to_apply)
+        self.apply_global_phase(other.omega)

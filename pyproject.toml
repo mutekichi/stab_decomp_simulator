@@ -1,0 +1,22 @@
+[build-system]
+requires = [
+    "setuptools>=42",
+    "wheel",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stab-decomp-simulator"
+version = "0.1.0"
+authors = [
+    { name = "Yuki Watanabe", email = "ppwatanabe19568@gmail.com" },
+]
+description = "A stabilizer simulation decomposition simulator for quantum circuits."
+requires-python = ">=3.11"
+dependencies = [
+    "numpy",
+    "qiskit>=1.2.4",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

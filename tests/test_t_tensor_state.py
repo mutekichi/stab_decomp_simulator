@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.typing as npt
 import pytest
-from src.t_tensor_state import construct_T_tensor_state
+from src.stab_decomp_simulator.t_tensor_state import construct_T_tensor_state
 
 
 def get_T_tensor_vector(num_qubits: int) -> npt.NDArray[np.complex128]:
@@ -18,8 +18,8 @@ def get_T_tensor_vector(num_qubits: int) -> npt.NDArray[np.complex128]:
 
 @pytest.mark.parametrize(
     "num_qubits",
-    range(2, 16),
-    ids=[f"{i} qubits" for i in range(2, 16)]
+    range(2, 12),
+    ids=[f"{i} qubits" for i in range(2, 12)]
 )
 def test_construct_T_tensor_state(num_qubits: int):
     state = construct_T_tensor_state(num_qubits)

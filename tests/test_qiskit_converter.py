@@ -5,7 +5,8 @@ import numpy as np
 import pytest
 from qiskit import QuantumCircuit
 from qiskit.quantum_info import Pauli, Statevector
-from src.qiskit_converter import qiskit_circuit_to_stab_decomp
+from src.stab_decomp_simulator.qiskit_converter import \
+    qiskit_circuit_to_stab_decomp
 
 
 def random_clifford_t_circuit(

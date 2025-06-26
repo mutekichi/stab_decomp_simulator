@@ -1,7 +1,9 @@
 import random
 
-from src.stabilizer_state_ch_form import StabilizerStateChForm
-from src.utils import apply_random_cliffords, are_equivalent_states
+from src.stab_decomp_simulator.stabilizer_state_ch_form import \
+    StabilizerStateChForm
+from src.stab_decomp_simulator.utils import (apply_random_cliffords,
+                                             are_equivalent_states)
 
 
 def test_project_and_remove():

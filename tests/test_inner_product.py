@@ -1,7 +1,8 @@
 import random
 
 import numpy as np
-from src.stabilizer_state_ch_form import StabilizerStateChForm
+from src.stab_decomp_simulator.stabilizer_state_ch_form import \
+    StabilizerStateChForm
 
 
 # --- Test functions ---
